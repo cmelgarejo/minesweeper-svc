@@ -1,0 +1,138 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "A minesweeper game API",
+        "title": "Minesweeper API",
+        "contact": {
+            "name": "Christian Melgarejo",
+            "email": "cmelgarejo.dev@gmail.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0.8"
+    },
+    "host": "localhost:3000",
+    "basePath": "/",
+    "paths": {
+        "/create": {
+            "post": {
+                "description": "Creates a game of minesweeper and returns a gameID that yo uahve to store to keep tabs on it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Creates a game of minesweeper",
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/service.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/main.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/main.HTTPError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.HTTPError": {
+            "type": "object"
+        },
+        "service.Field": {
+            "type": "object",
+            "properties": {
+                "adjMines": {
+                    "description": "count of adjacent mines",
+                    "type": "integer"
+                },
+                "clicked": {
+                    "description": "indicated whether the field was clicked",
+                    "type": "boolean"
+                },
+                "flagged": {
+                    "description": "red flag in the field",
+                    "type": "boolean"
+                },
+                "position": {
+                    "description": "position in the minefield",
+                    "$ref": "#/definitions/service.Position"
+                }
+            }
+        },
+        "service.Game": {
+            "type": "object",
+            "properties": {
+                "cols": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "finishedAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mineField": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/service.Field"
+                        }
+                    }
+                },
+                "mines": {
+                    "type": "integer"
+                },
+                "rows": {
+                    "type": "integer"
+                },
+                "startedAt": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.Position": {
+            "type": "object",
+            "properties": {
+                "col": {
+                    "description": "col of the field position",
+                    "type": "integer"
+                },
+                "row": {
+                    "description": "row of the field position",
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

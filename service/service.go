@@ -1,7 +1,6 @@
 package service
 
 import (
-	"math/rand"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,32 +36,15 @@ func (ms *MineSweeperGameSvcImpl) CreateGame(rows, cols, mines int) (gameID uuid
 		mines = rows + cols // Make sure amount of mines is relative to a median of rows + cols
 	}
 	id, _ := uuid.NewUUID()
-	mineCount := 0
-	mineField := make([][]Field, rows)
-	for i := 0; i < rows; i++ {
-		mineField[i] = make([]Field, cols)
-		for j := 0; j < cols; j++ {
-			mineField[i][j] = Field{}
-		}
-	}
-	for mineCount < mines {
-		seed := rand.NewSource(time.Now().UnixNano())
-		row := rand.New(seed).Intn(rows)
-		col := rand.New(seed).Intn(cols)
-		if !mineField[row][col].Mine {
-			mineField[row][col].Mine = true
-			mineCount++
-		}
-	}
 	newGame := Game{
 		ID:        id,
 		Rows:      rows,
 		Cols:      cols,
 		Mines:     mines,
-		Status:    GameStatusCreated,
-		MineField: mineField,
 		CreatedAt: time.Now(),
 	}
+	newGame.InitializeMinefield()
+
 	ms.games[id] = &newGame
 	return newGame.ID
 }
@@ -74,5 +56,6 @@ func (ms *MineSweeperGameSvcImpl) StartGame(gameID uuid.UUID) (err error) {
 
 func (ms *MineSweeperGameSvcImpl) Click(gameID uuid.UUID, clickType ClickType, col, row int) (err error) {
 	game := ms.games[gameID]
-	return game.Click(clickType, row, col)
+	err = game.Click(clickType, row, col)
+	return err
 }

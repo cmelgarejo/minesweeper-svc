@@ -1,0 +1,94 @@
+basePath: /
+definitions:
+  main.HTTPError:
+    type: object
+  service.Field:
+    properties:
+      adjMines:
+        description: count of adjacent mines
+        type: integer
+      clicked:
+        description: indicated whether the field was clicked
+        type: boolean
+      flagged:
+        description: red flag in the field
+        type: boolean
+      position:
+        $ref: '#/definitions/service.Position'
+        description: position in the minefield
+    type: object
+  service.Game:
+    properties:
+      cols:
+        type: integer
+      createdAt:
+        type: string
+      finishedAt:
+        type: string
+      id:
+        type: string
+      mineField:
+        items:
+          items:
+            $ref: '#/definitions/service.Field'
+          type: array
+        type: array
+      mines:
+        type: integer
+      rows:
+        type: integer
+      startedAt:
+        type: string
+      status:
+        type: string
+    type: object
+  service.Position:
+    properties:
+      col:
+        description: col of the field position
+        type: integer
+      row:
+        description: row of the field position
+        type: integer
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: cmelgarejo.dev@gmail.com
+    name: Christian Melgarejo
+  description: A minesweeper game API
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Minesweeper API
+  version: 1.0.8
+paths:
+  /create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a game of minesweeper and returns a gameID that yo uahve
+        to store to keep tabs on it
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/service.Game'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.HTTPError'
+      summary: Creates a game of minesweeper
+      tags:
+      - game
+swagger: "2.0"
