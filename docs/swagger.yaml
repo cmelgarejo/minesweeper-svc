@@ -1,8 +1,6 @@
 basePath: /
 definitions:
-  main.HTTPError:
-    type: object
-  service.Field:
+  engine.Field:
     properties:
       adjMines:
         description: count of adjacent mines
@@ -14,10 +12,11 @@ definitions:
         description: red flag in the field
         type: boolean
       position:
-        $ref: '#/definitions/service.Position'
+        $ref: '#/definitions/engine.Position'
         description: position in the minefield
+        type: object
     type: object
-  service.Game:
+  engine.Game:
     properties:
       cols:
         type: integer
@@ -30,7 +29,7 @@ definitions:
       mineField:
         items:
           items:
-            $ref: '#/definitions/service.Field'
+            $ref: '#/definitions/engine.Field'
           type: array
         type: array
       mines:
@@ -42,7 +41,7 @@ definitions:
       status:
         type: string
     type: object
-  service.Position:
+  engine.Position:
     properties:
       col:
         description: col of the field position
@@ -51,7 +50,16 @@ definitions:
         description: row of the field position
         type: integer
     type: object
-host: localhost:3000
+  responses.ResponseError:
+    properties:
+      code:
+        type: integer
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+host: localhost:8080
 info:
   contact:
     email: cmelgarejo.dev@gmail.com
@@ -63,32 +71,96 @@ info:
   title: Minesweeper API
   version: 1.0.8
 paths:
-  /create:
+  /api/game:
     post:
       consumes:
       - application/json
-      description: Creates a game of minesweeper and returns a gameID that yo uahve
-        to store to keep tabs on it
+      description: Creates a game of minesweeper and returns a gameID
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/service.Game'
+            $ref: '#/definitions/engine.Game'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/main.HTTPError'
+            $ref: '#/definitions/responses.ResponseError'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/main.HTTPError'
+            $ref: '#/definitions/responses.ResponseError'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/main.HTTPError'
+            $ref: '#/definitions/responses.ResponseError'
       summary: Creates a game of minesweeper
+      tags:
+      - game
+  /api/game/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Gets the information of a minesweeper game, fields and users
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/engine.Game'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Gets the information of a minesweeper game
+      tags:
+      - game
+    put:
+      consumes:
+      - application/json
+      description: Updates a game of minesweeper and returns a gameID
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/engine.Game'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Updates a game of minesweeper
       tags:
       - game
 swagger: "2.0"

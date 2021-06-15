@@ -13,12 +13,12 @@
         },
         "version": "1.0.8"
     },
-    "host": "localhost:3000",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/create": {
+        "/api/game": {
             "post": {
-                "description": "Creates a game of minesweeper and returns a gameID that yo uahve to store to keep tabs on it",
+                "description": "Creates a game of minesweeper and returns a gameID",
                 "consumes": [
                     "application/json"
                 ],
@@ -33,25 +33,123 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/service.Game"
+                            "$ref": "#/definitions/engine.Game"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/main.HTTPError"
+                            "$ref": "#/definitions/responses.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/main.HTTPError"
+                            "$ref": "#/definitions/responses.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/main.HTTPError"
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/game/{id}": {
+            "get": {
+                "description": "Gets the information of a minesweeper game, fields and users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Gets the information of a minesweeper game",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/engine.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates a game of minesweeper and returns a gameID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "game"
+                ],
+                "summary": "Updates a game of minesweeper",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Game ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/engine.Game"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
                         }
                     }
                 }
@@ -59,10 +157,7 @@
         }
     },
     "definitions": {
-        "main.HTTPError": {
-            "type": "object"
-        },
-        "service.Field": {
+        "engine.Field": {
             "type": "object",
             "properties": {
                 "adjMines": {
@@ -79,11 +174,12 @@
                 },
                 "position": {
                     "description": "position in the minefield",
-                    "$ref": "#/definitions/service.Position"
+                    "type": "object",
+                    "$ref": "#/definitions/engine.Position"
                 }
             }
         },
-        "service.Game": {
+        "engine.Game": {
             "type": "object",
             "properties": {
                 "cols": {
@@ -103,7 +199,7 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/service.Field"
+                            "$ref": "#/definitions/engine.Field"
                         }
                     }
                 },
@@ -121,7 +217,7 @@
                 }
             }
         },
-        "service.Position": {
+        "engine.Position": {
             "type": "object",
             "properties": {
                 "col": {
@@ -131,6 +227,20 @@
                 "row": {
                     "description": "row of the field position",
                     "type": "integer"
+                }
+            }
+        },
+        "responses.ResponseError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
                 }
             }
         }

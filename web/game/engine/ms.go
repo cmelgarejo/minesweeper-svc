@@ -1,4 +1,4 @@
-package service
+package engine
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/cmelgarejo/minesweeper-svc/utils"
 )
 
 var (
@@ -50,15 +50,15 @@ type Field struct {
 
 // Game contains the structure of the game
 type Game struct {
-	ID         uuid.UUID  `json:"id"`
+	ID         string     `json:"id"`
 	Rows       int        `json:"rows"`
 	Cols       int        `json:"cols"`
 	Mines      int        `json:"mines"`
 	Status     GameStatus `json:"status"`
 	MineField  [][]Field  `json:"mineField"`
-	CreatedAt  time.Time  `json:"createdAt"`
 	StartedAt  *time.Time `json:"startedAt,omitempty"`
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt"`
 	// CreatedBy User   `json:"createdBy"` // who created this game
 }
 
@@ -100,23 +100,44 @@ func (g *Game) Click(clickType ClickType, row, col int) error {
 	return nil
 }
 
-func (g *Game) InitializeMinefield() {
+func NewGame(rows, cols, mines int) *Game {
+	if rows < GameMinRows {
+		rows = GameMinRows
+	}
+	if cols < GameMinCols {
+		cols = GameMinCols
+	}
+	if mines < 1 || mines > rows*cols {
+		mines = rows + cols // Make sure amount of mines is relative to a median of rows + cols
+	}
+
+	id, _ := utils.GenerateGUID()
+	newGame := Game{
+		ID:        id,
+		Rows:      rows,
+		Cols:      cols,
+		Mines:     mines,
+		Status:    GameStatusCreated,
+		CreatedAt: time.Now(),
+		// CreatedBy: User,
+	}
+
 	mineCount := 0
-	g.MineField = make([][]Field, g.Rows)
-	for i := 0; i < g.Rows; i++ {
-		g.MineField[i] = make([]Field, g.Cols)
-		for j := 0; j < g.Cols; j++ {
-			g.MineField[i][j] = Field{
+	newGame.MineField = make([][]Field, newGame.Rows)
+	for i := 0; i < newGame.Rows; i++ {
+		newGame.MineField[i] = make([]Field, newGame.Cols)
+		for j := 0; j < newGame.Cols; j++ {
+			newGame.MineField[i][j] = Field{
 				Position: Position{i, j},
 			}
 		}
 	}
-	for mineCount < g.Mines {
+	for mineCount < newGame.Mines {
 		seed := rand.NewSource(time.Now().UnixNano())
-		row := rand.New(seed).Intn(g.Rows)
-		col := rand.New(seed).Intn(g.Cols)
-		if !g.MineField[row][col].Mine {
-			g.MineField[row][col].Mine = true
+		row := rand.New(seed).Intn(newGame.Rows)
+		col := rand.New(seed).Intn(newGame.Cols)
+		if !newGame.MineField[row][col].Mine {
+			newGame.MineField[row][col].Mine = true
 			mineCount++
 			offRow := row
 			if row == 0 {
@@ -126,18 +147,19 @@ func (g *Game) InitializeMinefield() {
 			if col == 0 {
 				offCol++
 			}
-			for i := offRow - 1; i < g.Rows && i <= row+1; i++ {
-				for j := offCol - 1; j < g.Cols && j <= col+1; j++ {
-					if !g.MineField[i][j].Mine {
-						g.MineField[i][j].AdjCount++
+			for i := offRow - 1; i < newGame.Rows && i <= row+1; i++ {
+				for j := offCol - 1; j < newGame.Cols && j <= col+1; j++ {
+					if !newGame.MineField[i][j].Mine {
+						newGame.MineField[i][j].AdjCount++
 					} else {
-						g.MineField[i][j].AdjCount = 0
+						newGame.MineField[i][j].AdjCount = 0
 					}
 				}
 			}
 		}
 	}
-	g.Status = GameStatusCreated
+
+	return &newGame
 }
 
 func (g *Game) IsActive() bool {
