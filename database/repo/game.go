@@ -10,7 +10,7 @@ import (
 
 type GameRepo interface {
 	UpsertGame(ctx context.Context, input *models.Game) (*models.Game, error)
-	Read(ctx context.Context, realmID string) (realm *models.Game, err error)
+	Read(ctx context.Context, gameID string) (game *models.Game, err error)
 }
 
 type GameRepoSvc struct {
@@ -23,8 +23,8 @@ func NewGameRepoSvc(db *database.DB) GameRepo {
 	}
 }
 
-func (svc *GameRepoSvc) Read(ctx context.Context, realmID string) (*models.Game, error) {
-	rec := &models.Game{BaseModel: models.BaseModel{ID: realmID}}
+func (svc *GameRepoSvc) Read(ctx context.Context, gameID string) (*models.Game, error) {
+	rec := &models.Game{BaseModel: models.BaseModel{ID: gameID}}
 	err := svc.db.Model(rec).Preload(clause.Associations).First(rec).Error
 
 	return rec, err

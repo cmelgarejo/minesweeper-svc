@@ -10,8 +10,10 @@ import (
 	"github.com/cmelgarejo/minesweeper-svc/utils"
 	"github.com/cmelgarejo/minesweeper-svc/utils/config"
 	"github.com/cmelgarejo/minesweeper-svc/utils/logger"
-	"github.com/cmelgarejo/minesweeper-svc/web/handlers/game"
+	"github.com/cmelgarejo/minesweeper-svc/web/game/service"
+	"github.com/cmelgarejo/minesweeper-svc/web/handlers/games"
 	"github.com/cmelgarejo/minesweeper-svc/web/handlers/ping"
+	"github.com/cmelgarejo/minesweeper-svc/web/handlers/users"
 	"github.com/cmelgarejo/minesweeper-svc/web/middleware"
 	"github.com/cmelgarejo/minesweeper-svc/web/services"
 	"github.com/cmelgarejo/minesweeper-svc/web/services/common"
@@ -33,7 +35,7 @@ import (
 // @host localhost:8080
 // @BasePath /
 func InitFiberServer(cfg *config.Config, log *logger.Logger,
-	catalog *msgcat.MessageCatalog, db *database.DB) (app *fiber.App, err error) {
+	catalog *msgcat.MessageCatalog, db *database.DB, gameEngineSvc service.MineSweeperGameSvc) (app *fiber.App, err error) {
 	app = fiber.New()
 	app.Use(recover.New())
 	app.Use(requestid.New())
@@ -43,12 +45,12 @@ func InitFiberServer(cfg *config.Config, log *logger.Logger,
 
 	app.Use("/swagger", swagger.Handler) // swagger
 
-	err = setupRoutes(app, cfg, log, *catalog, db)
+	err = setupRoutes(app, cfg, log, *catalog, db, gameEngineSvc)
 
 	return app, err
 }
 
-func setupRoutes(app *fiber.App, cfg *config.Config, log *logger.Logger, catalog msgcat.MessageCatalog, db *database.DB) (err error) {
+func setupRoutes(app *fiber.App, cfg *config.Config, log *logger.Logger, catalog msgcat.MessageCatalog, db *database.DB, gameEngineSvc service.MineSweeperGameSvc) (err error) {
 	// Default handler
 	pingHandler := adaptor.HTTPHandlerFunc(ping.Ping)
 	// Repos
@@ -63,23 +65,38 @@ func setupRoutes(app *fiber.App, cfg *config.Config, log *logger.Logger, catalog
 	authMiddleware := middleware.NewAuthMiddlewareSvc(*log, catalog, authRepo, responseHelperSvc)
 	apiKeyMiddleware := HTTPMiddleware(authMiddleware.CheckUserAPIKey)
 	// Game
-	gameHandler := game.NewGameHandlerSvc(*log, catalog, gameRepo, authSvc, requestHelperSvc, responseHelperSvc)
+	gameHandler := games.NewGameHandlerSvc(*log, catalog, gameRepo, gameEngineSvc, authSvc, requestHelperSvc, responseHelperSvc)
 	gameCreate := adaptor.HTTPHandlerFunc(gameHandler.Create)
 	gameRead := adaptor.HTTPHandlerFunc(gameHandler.Read)
-	gameUpdate := adaptor.HTTPHandlerFunc(gameHandler.Update)
+	gameClick := adaptor.HTTPHandlerFunc(gameHandler.Click)
+	// Game
+	authHandler := users.NewUserHandlerSvc(*log, catalog, authRepo, requestHelperSvc, responseHelperSvc)
+	authCreate := adaptor.HTTPHandlerFunc(authHandler.Create)
+	authRead := adaptor.HTTPHandlerFunc(authHandler.Read)
+	authUpdate := adaptor.HTTPHandlerFunc(authHandler.Update)
+	authSignIn := adaptor.HTTPHandlerFunc(authHandler.SignIn)
 
 	app.Get("/", pingHandler)
+	app.Get("/v1", pingHandler)
 	app.Get("/ping", pingHandler)
 	app.Get("/health", pingHandler)
 
 	// Middleware makes sure only authorized users are allowed to use these resources
-	api := app.Group("/api", apiKeyMiddleware)
+	api := app.Group("/v1/api", apiKeyMiddleware)
 
 	// Game
 	gameRoute := api.Group("/game")
-	gameRoute.Put("/", gameCreate)
+	gameRoute.Post("/", gameCreate)
 	gameRoute.Get("/:id", gameRead)
-	gameRoute.Put("/:id/click/:clickType/:row/:col", gameUpdate)
+	gameRoute.Put("/:id/click", gameClick)
+
+	apiAuth := app.Group("/v1/auth")
+	// Auth
+	apiAuth.Post("/signIn", authSignIn)
+	authRoute := apiAuth.Group("/user")
+	authRoute.Post("/", authCreate)
+	authRoute.Get("/:id", authRead)
+	authRoute.Put("/:id", authUpdate)
 
 	return err
 }

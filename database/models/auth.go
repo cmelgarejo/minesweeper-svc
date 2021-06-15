@@ -9,14 +9,14 @@ import (
 
 type User struct {
 	BaseModel
-	Email     string       `gorm:"uniqueIndex" json:"email"`
-	Username  string       `gorm:"uniqueIndex" json:"username"`
-	Password  string       `json:"-"`
+	Email     string       `json:"email" gorm:"uniqueIndex"`
+	Username  string       `json:"username" gorm:"uniqueIndex"`
+	Password  string       `json:"password"`
 	Fullname  string       `json:"fullname"`
 	APIKeys   []UserAPIKey `json:"apiKeys"`
-	Player    bool         `json:"-"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Admin     bool         `json:"-" gorm:"default:false"` // FUTURE: proper RBAC, roles, permissions, etc.
+	CreatedAt time.Time    `json:"-"`
+	UpdatedAt time.Time    `json:"-"`
 }
 
 // BeforeCreate hook that runs before entity create
@@ -47,12 +47,12 @@ func (u *User) hashPassword() (err error) {
 }
 
 type UserAPIKey struct {
-	ID        uint `gorm:"primarykey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	APIKey    string `gorm:"unique" json:"apiKey"`
-	UserID    string `json:"-"`
-	User      User   `json:"-"`
+	ID        uint      `json:"-" gorm:"primarykey"`
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
+	APIKey    string    `gorm:"unique" json:"apiKey"`
+	UserID    string    `json:"-"`
+	User      User      `json:"-"`
 }
 
 // BeforeCreate hook to run before entity create

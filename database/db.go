@@ -8,9 +8,9 @@ import (
 )
 
 func NewDB(cfg DBConfig, log *logger.Logger) (*DB, error) {
-	if cfg.DSN == "" {
-
-	}
+	// if cfg.DSN == "" {
+	// 	Fallback to in memory/redis store?
+	// }
 	db, err := gorm.Open(postgres.Open(cfg.DSN), &gorm.Config{})
 	if err != nil {
 		log.SendError(err)

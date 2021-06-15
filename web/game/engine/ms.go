@@ -40,12 +40,12 @@ type Position struct {
 
 //Field represents a square unit in the MineField
 type Field struct {
-	Mine     bool     `json:"-"`
-	Clicked  bool     `json:"clicked"`  // indicated whether the field was clicked
-	Flagged  bool     `json:"flagged"`  // red flag in the field
-	AdjCount int      `json:"adjMines"` // count of adjacent mines
-	Position Position `json:"position"` // position in the minefield
-	// ClickedBy User   `json:"clickedBy"` // who clicked this field
+	Mine      bool     `json:"-"`
+	Clicked   bool     `json:"clicked"`   // indicated whether the field was clicked
+	Flagged   bool     `json:"flagged"`   // red flag in the field
+	AdjCount  int      `json:"adjMines"`  // count of adjacent mines
+	Position  Position `json:"position"`  // position in the minefield
+	ClickedBy string   `json:"clickedBy"` // who clicked this field
 }
 
 // Game contains the structure of the game
@@ -59,7 +59,7 @@ type Game struct {
 	StartedAt  *time.Time `json:"startedAt,omitempty"`
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
 	CreatedAt  time.Time  `json:"createdAt"`
-	// CreatedBy User   `json:"createdBy"` // who created this game
+	CreatedBy  string     `json:"createdBy"` // who created this game
 }
 
 func (g *Game) Start() error {
@@ -70,7 +70,7 @@ func (g *Game) Start() error {
 	return fmt.Errorf("Cannot start a game that is in status: %s", g.Status)
 }
 
-func (g *Game) Click(clickType ClickType, row, col int) error {
+func (g *Game) Click(clickedBy string, clickType ClickType, row, col int) error {
 	g.printMinefieldPos()
 	if !g.IsActive() {
 		return ErrNotActive
@@ -82,6 +82,7 @@ func (g *Game) Click(clickType ClickType, row, col int) error {
 		return nil
 	}
 	g.MineField[row][col].Clicked = true
+	g.MineField[row][col].ClickedBy = clickedBy
 	switch clickType {
 	case GameClickTypeFlag:
 		g.MineField[row][col].Flagged = true
@@ -91,10 +92,10 @@ func (g *Game) Click(clickType ClickType, row, col int) error {
 			return ErrDefeat
 		}
 		if g.MineField[row][col].AdjCount == 0 {
-			_ = g.Click(GameClickTypeReveal, row, col)
+			_ = g.Click(clickedBy, GameClickTypeReveal, row, col)
 		}
 	case GameClickTypeReveal:
-		g.autoReveal(row, col)
+		g.autoReveal(clickedBy, row, col)
 	}
 	g.printMinefield()
 	return nil
@@ -166,7 +167,7 @@ func (g *Game) IsActive() bool {
 	return g.Status == GameStatusStarted
 }
 
-func (g *Game) autoReveal(row, col int) {
+func (g *Game) autoReveal(clickedBy string, row, col int) {
 	offRow := row
 	if row == 0 {
 		offRow++
@@ -179,7 +180,7 @@ func (g *Game) autoReveal(row, col int) {
 		for j := offCol - 1; j < g.Cols && j <= col+1; j++ {
 			if !g.MineField[i][j].Mine && g.MineField[i][j].AdjCount == 0 {
 				if !g.MineField[i][j].Clicked {
-					_ = g.Click(GameClickTypeReveal, i, j)
+					_ = g.Click(clickedBy, GameClickTypeReveal, i, j)
 				}
 			}
 		}

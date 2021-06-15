@@ -5,6 +5,7 @@ import (
 	"github.com/cmelgarejo/minesweeper-svc/utils/config"
 	"github.com/cmelgarejo/minesweeper-svc/utils/logger"
 	server "github.com/cmelgarejo/minesweeper-svc/web"
+	"github.com/cmelgarejo/minesweeper-svc/web/game/service"
 	"github.com/loopcontext/msgcat"
 )
 
@@ -22,7 +23,9 @@ func main() {
 	if err != nil {
 		log.SendFatal(err)
 	}
-	appsrv, err := server.InitFiberServer(cfg, log, &catalog, db)
+	gamesSvc := service.MineSweeperGameSvcImpl{}
+	gameEngine := gamesSvc.NewMineSweeperSvc()
+	appsrv, err := server.InitFiberServer(cfg, log, &catalog, db, gameEngine)
 	if err != nil {
 		log.SendFatal(err)
 	}

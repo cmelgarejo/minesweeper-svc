@@ -16,7 +16,7 @@
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/api/game": {
+        "/v1/api/game": {
             "post": {
                 "description": "Creates a game of minesweeper and returns a gameID",
                 "consumes": [
@@ -29,6 +29,24 @@
                     "game"
                 ],
                 "summary": "Creates a game of minesweeper",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "API Key",
+                        "name": "X-API-KEY",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Game Input",
+                        "name": "gameInput",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.GameCreateInput"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "Created",
@@ -57,7 +75,7 @@
                 }
             }
         },
-        "/api/game/{id}": {
+        "/v1/api/game/{id}": {
             "get": {
                 "description": "Gets the information of a minesweeper game, fields and users",
                 "consumes": [
@@ -71,6 +89,13 @@
                 ],
                 "summary": "Gets the information of a minesweeper game",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "API Key",
+                        "name": "X-API-KEY",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Game ID",
@@ -125,13 +150,240 @@
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "API Key",
+                        "name": "X-API-KEY",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Game Input",
+                        "name": "gameInput",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.GameInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/signIn": {
+            "post": {
+                "description": "Sign in user of minesweeper and returns an API Key",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Sign in user of minesweeper",
+                "parameters": [
+                    {
+                        "description": "Credentials",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.Credentials"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/user": {
+            "post": {
+                "description": "Creates an user of minesweeper and returns an userID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Creates an user of minesweeper",
+                "parameters": [
+                    {
+                        "description": "User Input",
+                        "name": "userInput",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UserInput"
+                        }
                     }
                 ],
                 "responses": {
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/engine.Game"
+                            "$ref": "#/definitions/responses.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/user/{id}": {
+            "get": {
+                "description": "Gets the information of a minesweeper user, fields and users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Gets the information of a minesweeper user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/responses.ResponseError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates an user of minesweeper and returns an userID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Updates an user of minesweeper",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User Input",
+                        "name": "userInput",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UserInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Response"
                         }
                     },
                     "400": {
@@ -168,6 +420,10 @@
                     "description": "indicated whether the field was clicked",
                     "type": "boolean"
                 },
+                "clickedBy": {
+                    "description": "who clicked this field",
+                    "type": "string"
+                },
                 "flagged": {
                     "description": "red flag in the field",
                     "type": "boolean"
@@ -186,6 +442,10 @@
                     "type": "integer"
                 },
                 "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "description": "who created this game",
                     "type": "string"
                 },
                 "finishedAt": {
@@ -230,17 +490,117 @@
                 }
             }
         },
+        "requests.Credentials": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "player1"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "player1"
+                }
+            }
+        },
+        "requests.GameCreateInput": {
+            "type": "object",
+            "properties": {
+                "col": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "mines": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "row": {
+                    "type": "integer",
+                    "example": 5
+                }
+            }
+        },
+        "requests.GameInput": {
+            "type": "object",
+            "properties": {
+                "clickType": {
+                    "type": "string",
+                    "enum": [
+                        "click",
+                        "flag"
+                    ]
+                },
+                "col": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "row": {
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
+        "requests.UserInput": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "player1@player1.com"
+                },
+                "fullname": {
+                    "type": "string",
+                    "example": "Ready Player One"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "player1"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "player1"
+                }
+            }
+        },
+        "responses.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 12345
+                },
+                "details": {
+                    "type": "string",
+                    "example": "some more details"
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.ResponseError"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "message"
+                },
+                "response": {
+                    "type": "object"
+                }
+            }
+        },
         "responses.ResponseError": {
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 12345
                 },
                 "details": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "some more details"
                 },
                 "message": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "message"
                 }
             }
         }

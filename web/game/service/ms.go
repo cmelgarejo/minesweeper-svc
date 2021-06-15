@@ -6,9 +6,10 @@ import (
 
 // MineSweeperGame represents a minesweeper game service
 type MineSweeperGameSvc interface {
-	CreateGame(rows, cols, mines int) (gameID string)
+	CreateGame(rows, cols, mines int) (game *engine.Game, err error)
 	StartGame(gameID string) (err error)
-	Click(gameID string, clickType engine.ClickType, row, col int) (err error)
+	GetGame(gameID string) (game *engine.Game, err error)
+	Click(gameID string, user string, clickType engine.ClickType, row, col int) (err error)
 }
 
 // MineSweeperGameSvcImpl implementing struct of a minesweeper game service
@@ -23,10 +24,10 @@ func (ms *MineSweeperGameSvcImpl) NewMineSweeperSvc() MineSweeperGameSvc {
 	}
 }
 
-func (ms *MineSweeperGameSvcImpl) CreateGame(rows, cols, mines int) (gameID string) {
-	game := engine.NewGame(rows, cols, mines)
+func (ms *MineSweeperGameSvcImpl) CreateGame(rows, cols, mines int) (game *engine.Game, err error) {
+	game = engine.NewGame(rows, cols, mines)
 	ms.games[game.ID] = game
-	return game.ID
+	return ms.games[game.ID], err
 }
 
 func (ms *MineSweeperGameSvcImpl) StartGame(gameID string) (err error) {
@@ -34,8 +35,12 @@ func (ms *MineSweeperGameSvcImpl) StartGame(gameID string) (err error) {
 	return game.Start()
 }
 
-func (ms *MineSweeperGameSvcImpl) Click(gameID string, clickType engine.ClickType, col, row int) (err error) {
+func (ms *MineSweeperGameSvcImpl) GetGame(gameID string) (game *engine.Game, err error) {
+	return ms.games[gameID], nil
+}
+
+func (ms *MineSweeperGameSvcImpl) Click(gameID string, clickedBy string, clickType engine.ClickType, col, row int) (err error) {
 	game := ms.games[gameID]
-	err = game.Click(clickType, row, col)
+	err = game.Click(clickedBy,clickType, row, col)
 	return err
 }

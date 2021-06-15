@@ -8,6 +8,9 @@ definitions:
       clicked:
         description: indicated whether the field was clicked
         type: boolean
+      clickedBy:
+        description: who clicked this field
+        type: string
       flagged:
         description: red flag in the field
         type: boolean
@@ -21,6 +24,9 @@ definitions:
       cols:
         type: integer
       createdAt:
+        type: string
+      createdBy:
+        description: who created this game
         type: string
       finishedAt:
         type: string
@@ -50,13 +56,84 @@ definitions:
         description: row of the field position
         type: integer
     type: object
+  requests.Credentials:
+    properties:
+      password:
+        example: player1
+        type: string
+      username:
+        example: player1
+        type: string
+    type: object
+  requests.GameCreateInput:
+    properties:
+      col:
+        example: 5
+        type: integer
+      mines:
+        example: 5
+        type: integer
+      row:
+        example: 5
+        type: integer
+    type: object
+  requests.GameInput:
+    properties:
+      clickType:
+        enum:
+        - click
+        - flag
+        type: string
+      col:
+        example: 0
+        type: integer
+      row:
+        example: 0
+        type: integer
+    type: object
+  requests.UserInput:
+    properties:
+      email:
+        example: player1@player1.com
+        type: string
+      fullname:
+        example: Ready Player One
+        type: string
+      password:
+        example: player1
+        type: string
+      username:
+        example: player1
+        type: string
+    type: object
+  responses.Response:
+    properties:
+      code:
+        example: 12345
+        type: integer
+      details:
+        example: some more details
+        type: string
+      errors:
+        items:
+          $ref: '#/definitions/responses.ResponseError'
+        type: array
+      message:
+        example: message
+        type: string
+      response:
+        type: object
+    type: object
   responses.ResponseError:
     properties:
       code:
+        example: 12345
         type: integer
       details:
+        example: some more details
         type: string
       message:
+        example: message
         type: string
     type: object
 host: localhost:8080
@@ -71,11 +148,23 @@ info:
   title: Minesweeper API
   version: 1.0.8
 paths:
-  /api/game:
+  /v1/api/game:
     post:
       consumes:
       - application/json
       description: Creates a game of minesweeper and returns a gameID
+      parameters:
+      - description: API Key
+        in: header
+        name: X-API-KEY
+        required: true
+        type: string
+      - description: Game Input
+        in: body
+        name: gameInput
+        required: true
+        schema:
+          $ref: '#/definitions/requests.GameCreateInput'
       produces:
       - application/json
       responses:
@@ -98,12 +187,17 @@ paths:
       summary: Creates a game of minesweeper
       tags:
       - game
-  /api/game/{id}:
+  /v1/api/game/{id}:
     get:
       consumes:
       - application/json
       description: Gets the information of a minesweeper game, fields and users
       parameters:
+      - description: API Key
+        in: header
+        name: X-API-KEY
+        required: true
+        type: string
       - description: Game ID
         in: path
         name: id
@@ -141,13 +235,24 @@ paths:
         name: id
         required: true
         type: string
+      - description: API Key
+        in: header
+        name: X-API-KEY
+        required: true
+        type: string
+      - description: Game Input
+        in: body
+        name: gameInput
+        required: true
+        schema:
+          $ref: '#/definitions/requests.GameInput'
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/engine.Game'
+            $ref: '#/definitions/responses.Response'
         "400":
           description: Bad Request
           schema:
@@ -163,4 +268,143 @@ paths:
       summary: Updates a game of minesweeper
       tags:
       - game
+  /v1/auth/signIn:
+    post:
+      consumes:
+      - application/json
+      description: Sign in user of minesweeper and returns an API Key
+      parameters:
+      - description: Credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/requests.Credentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Sign in user of minesweeper
+      tags:
+      - auth
+  /v1/auth/user:
+    post:
+      consumes:
+      - application/json
+      description: Creates an user of minesweeper and returns an userID
+      parameters:
+      - description: User Input
+        in: body
+        name: userInput
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Creates an user of minesweeper
+      tags:
+      - auth
+  /v1/auth/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Gets the information of a minesweeper user, fields and users
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Gets the information of a minesweeper user
+      tags:
+      - auth
+    put:
+      consumes:
+      - application/json
+      description: Updates an user of minesweeper and returns an userID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User Input
+        in: body
+        name: userInput
+        required: true
+        schema:
+          $ref: '#/definitions/requests.UserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Updates an user of minesweeper
+      tags:
+      - auth
 swagger: "2.0"
