@@ -18,7 +18,9 @@ type BaseModel struct {
 }
 
 func (m *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID, err = utils.GenerateGUID()
+	if m.ID == "" {
+		m.ID, err = utils.GenerateGUID()
+	}
 
 	return
 }

@@ -40,7 +40,7 @@ type Position struct {
 
 //Field represents a square unit in the MineField
 type Field struct {
-	Mine      bool     `json:"-"`
+	Mine      bool     `json:"mine"`
 	Clicked   bool     `json:"clicked"`   // indicated whether the field was clicked
 	Flagged   bool     `json:"flagged"`   // red flag in the field
 	AdjCount  int      `json:"adjMines"`  // count of adjacent mines
@@ -65,13 +65,14 @@ type Game struct {
 func (g *Game) Start() error {
 	if g.Status == GameStatusCreated {
 		g.Status = GameStatusStarted
+		now := time.Now()
+		g.StartedAt = &now
 		return nil
 	}
 	return fmt.Errorf("Cannot start a game that is in status: %s", g.Status)
 }
 
 func (g *Game) Click(clickedBy string, clickType ClickType, row, col int) error {
-	g.printMinefieldPos()
 	if !g.IsActive() {
 		return ErrNotActive
 	}
@@ -89,6 +90,8 @@ func (g *Game) Click(clickedBy string, clickType ClickType, row, col int) error 
 	case GameClickTypeNormal:
 		if !g.MineField[row][col].Flagged && g.MineField[row][col].Mine {
 			g.Status = GameStatusDefeat
+			now := time.Now()
+			g.FinishedAt = &now
 			return ErrDefeat
 		}
 		if g.MineField[row][col].AdjCount == 0 {
@@ -101,7 +104,7 @@ func (g *Game) Click(clickedBy string, clickType ClickType, row, col int) error 
 	return nil
 }
 
-func NewGame(rows, cols, mines int) *Game {
+func NewGame(rows, cols, mines int, createdBy string) *Game {
 	if rows < GameMinRows {
 		rows = GameMinRows
 	}
@@ -159,6 +162,8 @@ func NewGame(rows, cols, mines int) *Game {
 			}
 		}
 	}
+	newGame.CreatedBy = createdBy
+	newGame.CreatedAt = time.Now()
 
 	return &newGame
 }
@@ -209,6 +214,7 @@ func (g *Game) printMinefield() {
 			fmt.Print("] ")
 		}
 	}
+	fmt.Println()
 }
 
 func (g *Game) printMinefieldPos() {
@@ -221,4 +227,5 @@ func (g *Game) printMinefieldPos() {
 			// fmt.Printf(", %v]", g.MineField[i][j].Position.Col)
 		}
 	}
+	fmt.Println()
 }

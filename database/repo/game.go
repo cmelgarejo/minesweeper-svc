@@ -9,8 +9,9 @@ import (
 )
 
 type GameRepo interface {
-	UpsertGame(ctx context.Context, input *models.Game) (*models.Game, error)
+	UpsertGame(ctx context.Context, gameID *string, input *models.Game) (*models.Game, error)
 	Read(ctx context.Context, gameID string) (game *models.Game, err error)
+	List(ctx context.Context) (games []*models.Game, err error)
 }
 
 type GameRepoSvc struct {
@@ -30,8 +31,20 @@ func (svc *GameRepoSvc) Read(ctx context.Context, gameID string) (*models.Game, 
 	return rec, err
 }
 
-func (svc *GameRepoSvc) UpsertGame(ctx context.Context, input *models.Game) (*models.Game, error) {
-	err := svc.db.Model(input).FirstOrCreate(input, input).Save(input).Error
+func (svc *GameRepoSvc) List(ctx context.Context) (games []*models.Game, err error) {
+	err = svc.db.Model(games).Preload(clause.Associations).Find(&games).Error
+
+	return
+}
+
+func (svc *GameRepoSvc) UpsertGame(ctx context.Context, gameID *string, input *models.Game) (*models.Game, error) {
+	var err error
+	if gameID == nil {
+		err = svc.db.Model(input).FirstOrCreate(input, input).Error
+	} else {
+		input.ID = *gameID
+		err = svc.db.Unscoped().Model(input).Save(input).Error
+	}
 	if err != nil {
 		return nil, err
 	}

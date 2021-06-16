@@ -69,6 +69,8 @@ func setupRoutes(app *fiber.App, cfg *config.Config, log *logger.Logger, catalog
 	gameCreate := adaptor.HTTPHandlerFunc(gameHandler.Create)
 	gameRead := adaptor.HTTPHandlerFunc(gameHandler.Read)
 	gameClick := adaptor.HTTPHandlerFunc(gameHandler.Click)
+	gameList := adaptor.HTTPHandlerFunc(gameHandler.List)
+	gameStart := adaptor.HTTPHandlerFunc(gameHandler.Start)
 	// Game
 	authHandler := users.NewUserHandlerSvc(*log, catalog, authRepo, requestHelperSvc, responseHelperSvc)
 	authCreate := adaptor.HTTPHandlerFunc(authHandler.Create)
@@ -85,10 +87,12 @@ func setupRoutes(app *fiber.App, cfg *config.Config, log *logger.Logger, catalog
 	api := app.Group("/v1/api", apiKeyMiddleware)
 
 	// Game
-	gameRoute := api.Group("/game")
+	gameRoute := api.Group("/games")
 	gameRoute.Post("/", gameCreate)
+	gameRoute.Get("/", gameList)
 	gameRoute.Get("/:id", gameRead)
-	gameRoute.Put("/:id/click", gameClick)
+	gameRoute.Patch("/:id", gameClick)
+	gameRoute.Post("/start/:id", gameStart)
 
 	apiAuth := app.Group("/v1/auth")
 	// Auth

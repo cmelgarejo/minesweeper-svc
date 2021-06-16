@@ -1,15 +1,23 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/cmelgarejo/minesweeper-svc/web/game/engine"
+)
+
+var (
+	ErrGameNotFound = errors.New("Game not found")
 )
 
 // MineSweeperGame represents a minesweeper game service
 type MineSweeperGameSvc interface {
-	CreateGame(rows, cols, mines int) (game *engine.Game, err error)
+	CreateGame(rows, cols, mines int, createdBy string) (game *engine.Game, err error)
 	StartGame(gameID string) (err error)
 	GetGame(gameID string) (game *engine.Game, err error)
 	Click(gameID string, user string, clickType engine.ClickType, row, col int) (err error)
+	GetGameList() (games map[string]*engine.Game, err error)
+	UpdateGameState(gameID string, game *engine.Game) (err error)
 }
 
 // MineSweeperGameSvcImpl implementing struct of a minesweeper game service
@@ -24,23 +32,42 @@ func (ms *MineSweeperGameSvcImpl) NewMineSweeperSvc() MineSweeperGameSvc {
 	}
 }
 
-func (ms *MineSweeperGameSvcImpl) CreateGame(rows, cols, mines int) (game *engine.Game, err error) {
-	game = engine.NewGame(rows, cols, mines)
+func (ms *MineSweeperGameSvcImpl) CreateGame(rows, cols, mines int, createdBy string) (game *engine.Game, err error) {
+	game = engine.NewGame(rows, cols, mines, createdBy)
 	ms.games[game.ID] = game
 	return ms.games[game.ID], err
 }
 
 func (ms *MineSweeperGameSvcImpl) StartGame(gameID string) (err error) {
-	game := ms.games[gameID]
+	game, err := ms.GetGame(gameID)
+	if err != nil {
+		return err
+	}
+
 	return game.Start()
 }
 
 func (ms *MineSweeperGameSvcImpl) GetGame(gameID string) (game *engine.Game, err error) {
-	return ms.games[gameID], nil
+	if _, found := ms.games[gameID]; found {
+		return ms.games[gameID], nil
+	}
+	return nil, ErrGameNotFound
 }
 
 func (ms *MineSweeperGameSvcImpl) Click(gameID string, clickedBy string, clickType engine.ClickType, col, row int) (err error) {
-	game := ms.games[gameID]
-	err = game.Click(clickedBy,clickType, row, col)
-	return err
+	game, err := ms.GetGame(gameID)
+	if err != nil {
+		return err
+	}
+	return game.Click(clickedBy, clickType, row, col)
+}
+
+func (ms *MineSweeperGameSvcImpl) GetGameList() (games map[string]*engine.Game, err error) {
+	return ms.games, nil
+}
+
+func (ms *MineSweeperGameSvcImpl) UpdateGameState(gameID string, game *engine.Game) (err error) {
+	ms.games[gameID] = game
+
+	return nil
 }

@@ -10,14 +10,24 @@ import (
 
 // contextKey defines a type for context keys shared in the app
 type contextKey string
+
 var CurrrentUserCtxKey contextKey = "currentUser"
 
-func ToJSON(data interface{}) ([]byte, error) {
+func ToJSONBytes(data interface{}) ([]byte, error) {
 	raw, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
 	}
 	return raw, err
+}
+
+func ToObject(data []byte, object interface{}) error {
+	err := json.Unmarshal(data, &object)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GenerateGUID Generates a GUID
