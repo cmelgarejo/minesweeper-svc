@@ -1,62 +1,5 @@
 basePath: /
 definitions:
-  engine.Field:
-    properties:
-      adjMines:
-        description: count of adjacent mines
-        type: integer
-      clicked:
-        description: indicated whether the field was clicked
-        type: boolean
-      clickedBy:
-        description: who clicked this field
-        type: string
-      flagged:
-        description: red flag in the field
-        type: boolean
-      mine:
-        type: boolean
-      position:
-        $ref: '#/definitions/engine.Position'
-        description: position in the minefield
-    type: object
-  engine.Game:
-    properties:
-      cols:
-        type: integer
-      createdAt:
-        type: string
-      createdBy:
-        description: who created this game
-        type: string
-      finishedAt:
-        type: string
-      id:
-        type: string
-      mineField:
-        items:
-          items:
-            $ref: '#/definitions/engine.Field'
-          type: array
-        type: array
-      mines:
-        type: integer
-      rows:
-        type: integer
-      startedAt:
-        type: string
-      status:
-        type: string
-    type: object
-  engine.Position:
-    properties:
-      col:
-        description: col of the field position
-        type: integer
-      row:
-        description: row of the field position
-        type: integer
-    type: object
   requests.Credentials:
     properties:
       password:
@@ -206,7 +149,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/engine.Game'
+            $ref: '#/definitions/responses.Response'
         "400":
           description: Bad Request
           schema:
@@ -243,10 +186,10 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
-            $ref: '#/definitions/engine.Game'
+            $ref: '#/definitions/responses.Response'
         "400":
           description: Bad Request
           schema:

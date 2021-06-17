@@ -104,7 +104,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/engine.Game"
+                            "$ref": "#/definitions/responses.Response"
                         }
                     },
                     "400": {
@@ -219,10 +219,10 @@
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/engine.Game"
+                            "$ref": "#/definitions/responses.Response"
                         }
                     },
                     "400": {
@@ -525,89 +525,6 @@
         }
     },
     "definitions": {
-        "engine.Field": {
-            "type": "object",
-            "properties": {
-                "adjMines": {
-                    "description": "count of adjacent mines",
-                    "type": "integer"
-                },
-                "clicked": {
-                    "description": "indicated whether the field was clicked",
-                    "type": "boolean"
-                },
-                "clickedBy": {
-                    "description": "who clicked this field",
-                    "type": "string"
-                },
-                "flagged": {
-                    "description": "red flag in the field",
-                    "type": "boolean"
-                },
-                "mine": {
-                    "type": "boolean"
-                },
-                "position": {
-                    "description": "position in the minefield",
-                    "$ref": "#/definitions/engine.Position"
-                }
-            }
-        },
-        "engine.Game": {
-            "type": "object",
-            "properties": {
-                "cols": {
-                    "type": "integer"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "createdBy": {
-                    "description": "who created this game",
-                    "type": "string"
-                },
-                "finishedAt": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "mineField": {
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/engine.Field"
-                        }
-                    }
-                },
-                "mines": {
-                    "type": "integer"
-                },
-                "rows": {
-                    "type": "integer"
-                },
-                "startedAt": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "engine.Position": {
-            "type": "object",
-            "properties": {
-                "col": {
-                    "description": "col of the field position",
-                    "type": "integer"
-                },
-                "row": {
-                    "description": "row of the field position",
-                    "type": "integer"
-                }
-            }
-        },
         "requests.Credentials": {
             "type": "object",
             "properties": {

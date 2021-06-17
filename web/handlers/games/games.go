@@ -59,7 +59,7 @@ func NewGameHandlerSvc(log logger.Logger, catalog msgcat.MessageCatalog,
 // @Tags game
 // @Accept json
 // @Produce json
-// @Success 201 {object} engine.Game
+// @Success 201 {object} responses.Response
 // @Failure 400 {object} responses.ResponseError
 // @Failure 404 {object} responses.ResponseError
 // @Failure 500 {object} responses.ResponseError
@@ -115,7 +115,7 @@ func (svc *GameHandlerSvc) Create(w http.ResponseWriter, r *http.Request) {
 // @Tags game
 // @Accept json
 // @Produce json
-// @Success 201 {object} engine.Game
+// @Success 200 {object} responses.Response
 // @Failure 400 {object} responses.ResponseError
 // @Failure 404 {object} responses.ResponseError
 // @Failure 500 {object} responses.ResponseError
