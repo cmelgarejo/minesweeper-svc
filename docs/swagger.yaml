@@ -19,7 +19,6 @@ definitions:
       position:
         $ref: '#/definitions/engine.Position'
         description: position in the minefield
-        type: object
     type: object
   engine.Game:
     properties:
@@ -138,7 +137,7 @@ definitions:
         example: message
         type: string
     type: object
-host: localhost:8080
+host: minesweeper-svc.herokuapp.com
 info:
   contact:
     email: cmelgarejo.dev@gmail.com
@@ -488,4 +487,6 @@ paths:
       summary: Updates an user of minesweeper
       tags:
       - auth
+schemes:
+- https
 swagger: "2.0"

@@ -1,4 +1,7 @@
 {
+    "schemes": [
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
         "description": "A minesweeper game API",
@@ -13,7 +16,7 @@
         },
         "version": "1.0.8"
     },
-    "host": "localhost:8080",
+    "host": "minesweeper-svc.herokuapp.com",
     "basePath": "/",
     "paths": {
         "/v1/api/games": {
@@ -546,7 +549,6 @@
                 },
                 "position": {
                     "description": "position in the minefield",
-                    "type": "object",
                     "$ref": "#/definitions/engine.Position"
                 }
             }

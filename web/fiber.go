@@ -32,7 +32,8 @@ import (
 // @contact.email cmelgarejo.dev@gmail.com
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
-// @host localhost:8080
+// @host minesweeper-svc.herokuapp.com
+// @schemes https
 // @BasePath /
 func InitFiberServer(cfg *config.Config, log *logger.Logger,
 	catalog *msgcat.MessageCatalog, db *database.DB, gameEngineSvc service.MineSweeperGameSvc) (app *fiber.App, err error) {
