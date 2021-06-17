@@ -2,8 +2,15 @@ package migrations
 
 import (
 	"github.com/cmelgarejo/minesweeper-svc/database/models"
+	"github.com/cmelgarejo/minesweeper-svc/web/game/engine"
+	"github.com/cmelgarejo/minesweeper-svc/web/game/service"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
+)
+
+const (
+	AdminApiKey = "587fa65a9c375165828a6fbb5f9963a7"
+	TestGameID  = "ef99fdfd88565827ad330d83aac5fbaa"
 )
 
 func firstUserMigration() *gormigrate.Migration {
@@ -13,11 +20,13 @@ func firstUserMigration() *gormigrate.Migration {
 			adm := &models.User{
 				Fullname: "Minesweeper Admin",
 				Email:    "admin@minesweeper.svc",
-				Username: "admin",
-				Password: "test7eed0b835b8659dfb76b7956ce82ba6c",
+				Username: "mineadmin",
+				Password: AdminApiKey,
 				Admin:    true,
 				APIKeys: []models.UserAPIKey{
-					{}, // Forces to create a new API key
+					{
+						APIKey: AdminApiKey,
+					},
 				},
 			}
 			if err = tx.Create(adm).Error; err != nil {
@@ -45,6 +54,19 @@ func firstUserMigration() *gormigrate.Migration {
 				},
 			}
 			if err = tx.Create(p2).Error; err != nil {
+				return err
+			}
+			gameService := service.MineSweeperGameSvcImpl{}
+			game, _ := gameService.NewMineSweeperSvc().CreateGame(5, 5, 3, adm.Fullname)
+			game.ID = TestGameID
+			testGame := &models.Game{
+				Rows: 5, Cols: 5, Mines: 3,
+				Status:      engine.GameStatusCreated,
+				CreatedByID: adm.ID,
+			}
+			testGame.ID = TestGameID
+			testGame.UpdateGameState(game)
+			if err = tx.Create(testGame).Error; err != nil {
 				return err
 			}
 

@@ -35,3 +35,6 @@ set:
   1400:
     short: Success with errors
     long: 'Success with errors. The following {{0}} had errors: {{1}}'
+  1500:
+    short: BOOM! Defeat!
+    long: 'Total defeat! Bomb exploded on row: {{0}} and column: {{1}}'

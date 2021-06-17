@@ -2,11 +2,14 @@ package games
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"path"
 
 	"github.com/cmelgarejo/minesweeper-svc/database/models"
 	"github.com/cmelgarejo/minesweeper-svc/database/repo"
+	"github.com/cmelgarejo/minesweeper-svc/resources/messages/codes"
+	"github.com/cmelgarejo/minesweeper-svc/utils"
 	"github.com/cmelgarejo/minesweeper-svc/utils/logger"
 	"github.com/cmelgarejo/minesweeper-svc/web/game/engine"
 	"github.com/cmelgarejo/minesweeper-svc/web/game/service"
@@ -21,8 +24,8 @@ type GameHandler interface {
 	Read(w http.ResponseWriter, r *http.Request)
 	Click(w http.ResponseWriter, r *http.Request)
 	// For Admins
-	// List(w http.ResponseWriter, r *http.Request)
-	// Delete(w http.ResponseWriter, r *http.Request)
+	List(w http.ResponseWriter, r *http.Request)
+	Start(w http.ResponseWriter, r *http.Request)
 }
 
 type GameHandlerSvc struct {
@@ -60,28 +63,25 @@ func NewGameHandlerSvc(log logger.Logger, catalog msgcat.MessageCatalog,
 // @Failure 400 {object} responses.ResponseError
 // @Failure 404 {object} responses.ResponseError
 // @Failure 500 {object} responses.ResponseError
-// @Router /v1/api/game [post]
-// @Param X-API-KEY header string true "API Key"
+// @Router /v1/api/games [post]
+// @Param X-API-KEY header string true "API Key" default(587fa65a9c375165828a6fbb5f9963a7)
 // @Param gameInput body requests.GameCreateInput true "Game Input"
 func (svc *GameHandlerSvc) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	currentUser, err := svc.authSvc.GetCurrentUser(ctx)
 	if err != nil {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-
 		return
 	}
 	var input requests.GameCreateInput
 	err, status := svc.requestHelper.DecodeJSONBody(w, r, &input)
 	if err != nil {
 		svc.responseHelper.Error(w, r, status, err)
-
 		return
 	}
-	game, err := svc.gameEngineSvc.CreateGame(input.Rows, input.Cols, input.Mines)
+	game, err := svc.gameEngineSvc.CreateGame(input.Rows, input.Cols, input.Mines, currentUser.Fullname)
 	if err != nil {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-
 		return
 	}
 	var mf struct {
@@ -90,21 +90,20 @@ func (svc *GameHandlerSvc) Create(w http.ResponseWriter, r *http.Request) {
 	mf.Minefield = game.MineField
 	b, _ := json.Marshal(mf)
 	gameStore := &models.Game{
-		Rows:        1,
-		Cols:        1,
-		Mines:       1,
-		CreatedByID: currentUser.ID,
+		Rows:        input.Rows,
+		Cols:        input.Cols,
+		Mines:       input.Mines,
+		CreatedByID: currentUser.Fullname,
 	}
-	err = json.Unmarshal(b, &gameStore.MineField)
+	err = json.Unmarshal(b, &gameStore.GameState)
 	if err != nil {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-
 		return
 	}
-	_, err = svc.gameRepo.UpsertGame(ctx, gameStore)
+	gameStore.ID = game.ID
+	_, err = svc.gameRepo.UpsertGame(ctx, nil, gameStore)
 	if err != nil {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-
 		return
 	}
 	svc.responseHelper.Send(w, r, http.StatusOK, game.ID)
@@ -120,29 +119,37 @@ func (svc *GameHandlerSvc) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} responses.ResponseError
 // @Failure 404 {object} responses.ResponseError
 // @Failure 500 {object} responses.ResponseError
-// @Router /v1/api/game/{id} [get]
-// @Param X-API-KEY header string true "API Key"
-// @Param id path string true "Game ID"
+// @Router /v1/api/games/{id} [get]
+// @Param id path string true "Game ID" default(ef99fdfd88565827ad330d83aac5fbaa)
+// @Param X-API-KEY header string true "API Key" default(587fa65a9c375165828a6fbb5f9963a7)
 func (svc *GameHandlerSvc) Read(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	// currentUser, err := svc.authSvc.GetCurrentUser(ctx)
-	// if err != nil {
-	// 	svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-	// 	return
-	// }
 	gameID := path.Base(r.URL.Path)
-	list, err := svc.gameRepo.Read(ctx, gameID)
+	game, err := svc.gameEngineSvc.GetGame(gameID)
+	if err != nil {
+		// if the game is not cached in the game engine service, lets pick from db
+		if errors.Is(err, service.ErrGameNotFound) {
+			gameStore, err := svc.gameRepo.Read(ctx, gameID)
+			if err == nil {
+				game = gameStore.GetGameState()
+			}
+		}
+		if err != nil {
+			svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
 	if err != nil {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-
 		return
 	}
-	svc.responseHelper.Send(w, r, http.StatusOK, list)
+	svc.responseHelper.Send(w, r, http.StatusOK, game)
 }
 
 // Click godoc
-// @Summary Updates a game of minesweeper
-// @Description Updates a game of minesweeper and returns a gameID
+// @Summary Clicks field on a game of minesweeper
+// @Description Clicks field on a game of minesweeper and returns the mine field state
 // @Tags game
 // @Accept json
 // @Produce json
@@ -150,48 +157,152 @@ func (svc *GameHandlerSvc) Read(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} responses.ResponseError
 // @Failure 404 {object} responses.ResponseError
 // @Failure 500 {object} responses.ResponseError
-// @Router /v1/api/game/{id} [put]
-// @Param id path string true "Game ID"
-// @Param X-API-KEY header string true "API Key"
+// @Router /v1/api/games/{id} [patch]
+// @Param id path string true "Game ID" default(ef99fdfd88565827ad330d83aac5fbaa)
+// @Param X-API-KEY header string true "API Key" default(587fa65a9c375165828a6fbb5f9963a7)
 // @Param gameInput body requests.GameInput true "Game Input"
 func (svc *GameHandlerSvc) Click(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	currentUser, err := svc.authSvc.GetCurrentUser(ctx)
+	currentUser, err := svc.authSvc.GetCurrentUser(r.Context())
 	if err != nil {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-
 		return
 	}
+	// Get player input
 	var input requests.GameInput
 	err, status := svc.requestHelper.DecodeJSONBody(w, r, &input)
 	if err != nil {
 		svc.responseHelper.Error(w, r, status, err)
-
 		return
 	}
+	// Get game id
 	gameID := path.Base(r.URL.Path)
-	err = svc.gameEngineSvc.Click(gameID, currentUser.Fullname, input.GetClickType(), input.Row, input.Col)
+	// Get game data from store and sync
+	gameStore, err := svc.gameRepo.Read(ctx, gameID)
 	if err != nil {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
-
 		return
 	}
-	svc.responseHelper.Send(w, r, http.StatusOK, nil)
+	_ = svc.gameEngineSvc.UpdateGameState(gameID, gameStore.GetGameState())
+	// Click in the game engine
+	err = svc.gameEngineSvc.Click(gameID, currentUser.Fullname, input.GetClickType(), input.Row, input.Col)
+	if err != nil {
+		if errors.Is(err, engine.ErrDefeat) {
+			svc.responseHelper.Error(w, r, http.StatusInternalServerError,
+				svc.catalog.WrapErrorWithCtx(ctx, err, codes.MsgCodeTotalDefeat, input.Row, input.Col))
+			gameStore.Status = engine.GameStatusDefeat
+		} else {
+			svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+	}
+	game, err := svc.gameEngineSvc.GetGame(gameID)
+	if err != nil {
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	gameStore.UpdateGameState(game)
+	_, err = svc.gameRepo.UpsertGame(ctx, &gameID, gameStore)
+	if err != nil {
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	// Should the error been pushed in the
+	if gameStore.Status == engine.GameStatusDefeat {
+		return
+	}
+	svc.responseHelper.Send(w, r, http.StatusOK, game)
 }
 
-// func (svc *GameHandlerSvc) List(w http.ResponseWriter, r *http.Request) {
-// 	ctx := r.Context()
-// 	currentUser, err := svc.authSvc.GetCurrentUser(ctx)
-// 	if err != nil {
-// 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+// List godoc
+// @Summary Gets a list of games
+// @Description Gets a list of games, only Admins can see it
+// @Tags game
+// @Accept json
+// @Produce json
+// @Success 200 {object} responses.Response
+// @Failure 400 {object} responses.ResponseError
+// @Failure 404 {object} responses.ResponseError
+// @Failure 500 {object} responses.ResponseError
+// @Router /v1/api/games [get]
+// @Param X-API-KEY header string true "API Key" default(587fa65a9c375165828a6fbb5f9963a7)
+func (svc *GameHandlerSvc) List(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	currentUser, err := svc.authSvc.GetCurrentUser(ctx)
+	if err != nil || !currentUser.Admin {
+		if !currentUser.Admin {
+			err = svc.catalog.GetErrorWithCtx(ctx, 2)
+		}
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	var list map[string]*engine.Game
+	list, err = svc.gameEngineSvc.GetGameList()
+	if len(list) < 1 {
+		gamesStore, err := svc.gameRepo.List(ctx)
+		if err == nil {
+			for _, game := range gamesStore {
+				list[game.ID] = &engine.Game{}
+				b, _ := utils.ToJSONBytes(game.GameState)
+				_ = utils.ToObject(b, list[game.ID])
 
-// 		return
-// 	}
-// 	list, err := svc.gameRepo.ListByClientID(ctx, currentUser.Client.ID)
-// 	if err != nil {
-// 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+			}
+		}
+	}
+	if err != nil {
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	svc.responseHelper.Send(w, r, http.StatusOK, list)
+}
 
-// 		return
-// 	}
-// 	svc.responseHelper.Send(w, r, http.StatusOK, list)
-// }
+// StartGame godoc
+// @Summary Starts a game of minesweeper
+// @Description Starts a game of minesweeper and returns the mine field state
+// @Tags game
+// @Accept json
+// @Produce json
+// @Success 200 {object} responses.Response
+// @Failure 400 {object} responses.ResponseError
+// @Failure 404 {object} responses.ResponseError
+// @Failure 500 {object} responses.ResponseError
+// @Router /v1/api/games/start/{id} [post]
+// @Param id path string true "Game ID" default(ef99fdfd88565827ad330d83aac5fbaa)
+// @Param X-API-KEY header string true "API Key" default(587fa65a9c375165828a6fbb5f9963a7)
+func (svc *GameHandlerSvc) Start(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	// FUTURE: I could store who started then game...
+	// currentUser, err := svc.authSvc.GetCurrentUser(ctx)
+	// if err != nil {
+	// 	svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+	// 	return
+	// }
+	// Get game id
+	gameID := path.Base(r.URL.Path)
+	// Get game data from store and sync
+	gameStore, err := svc.gameRepo.Read(ctx, gameID)
+	if err != nil {
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	_ = svc.gameEngineSvc.UpdateGameState(gameID, gameStore.GetGameState())
+	// Start the game
+	err = svc.gameEngineSvc.StartGame(gameID)
+	if err != nil {
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	game, err := svc.gameEngineSvc.GetGame(gameID)
+	if err != nil {
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	gameStore.UpdateGameState(game)
+	_, err = svc.gameRepo.UpsertGame(ctx, &gameID, gameStore)
+	if err != nil {
+		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	svc.responseHelper.Send(w, r, http.StatusOK, game)
+}

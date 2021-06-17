@@ -31,7 +31,7 @@ func NewResponseHelperSvc(log logger.Logger, catalog msgcat.MessageCatalog, cont
 }
 
 func (svc *ResponseHelperSvc) Send(w http.ResponseWriter, r *http.Request, statusCode int, obj interface{}) {
-	data, err := utils.ToJSON(svc.buildResponse(r, obj))
+	data, err := utils.ToJSONBytes(svc.buildResponse(r, obj))
 	if err != nil {
 		svc.Error(w, r, http.StatusInternalServerError, err)
 	}
@@ -45,7 +45,7 @@ func (svc *ResponseHelperSvc) Error(w http.ResponseWriter, r *http.Request, stat
 	case AppTypeJSON:
 		fallthrough
 	default:
-		data, errdata = utils.ToJSON(svc.buildResponseError(r, err))
+		data, errdata = utils.ToJSONBytes(svc.buildResponseError(r, err))
 	}
 	if errdata != nil {
 		svc.log.SendError(errdata)

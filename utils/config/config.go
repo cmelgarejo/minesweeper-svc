@@ -37,7 +37,7 @@ func InitConfig() (*Config, error) {
 	if err != nil {
 		return nil, ErrDBMissingPORT
 	}
-	dsn := os.Getenv("DB_DSN")
+	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		return nil, ErrDBMissingDSN
 	}

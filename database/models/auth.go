@@ -57,6 +57,9 @@ type UserAPIKey struct {
 
 // BeforeCreate hook to run before entity create
 func (uak *UserAPIKey) BeforeCreate(tx *gorm.DB) (err error) {
-	uak.APIKey, err = utils.GenerateGUID()
+	if uak.APIKey == "" {
+		uak.APIKey, err = utils.GenerateGUID()
+	}
+
 	return
 }

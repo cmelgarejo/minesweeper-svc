@@ -14,6 +14,8 @@ definitions:
       flagged:
         description: red flag in the field
         type: boolean
+      mine:
+        type: boolean
       position:
         $ref: '#/definitions/engine.Position'
         description: position in the minefield
@@ -148,13 +150,47 @@ info:
   title: Minesweeper API
   version: 1.0.8
 paths:
-  /v1/api/game:
+  /v1/api/games:
+    get:
+      consumes:
+      - application/json
+      description: Gets a list of games, only Admins can see it
+      parameters:
+      - default: 587fa65a9c375165828a6fbb5f9963a7
+        description: API Key
+        in: header
+        name: X-API-KEY
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Gets a list of games
+      tags:
+      - game
     post:
       consumes:
       - application/json
       description: Creates a game of minesweeper and returns a gameID
       parameters:
-      - description: API Key
+      - default: 587fa65a9c375165828a6fbb5f9963a7
+        description: API Key
         in: header
         name: X-API-KEY
         required: true
@@ -187,20 +223,22 @@ paths:
       summary: Creates a game of minesweeper
       tags:
       - game
-  /v1/api/game/{id}:
+  /v1/api/games/{id}:
     get:
       consumes:
       - application/json
       description: Gets the information of a minesweeper game, fields and users
       parameters:
-      - description: API Key
-        in: header
-        name: X-API-KEY
-        required: true
-        type: string
-      - description: Game ID
+      - default: ef99fdfd88565827ad330d83aac5fbaa
+        description: Game ID
         in: path
         name: id
+        required: true
+        type: string
+      - default: 587fa65a9c375165828a6fbb5f9963a7
+        description: API Key
+        in: header
+        name: X-API-KEY
         required: true
         type: string
       produces:
@@ -225,17 +263,20 @@ paths:
       summary: Gets the information of a minesweeper game
       tags:
       - game
-    put:
+    patch:
       consumes:
       - application/json
-      description: Updates a game of minesweeper and returns a gameID
+      description: Clicks field on a game of minesweeper and returns the mine field
+        state
       parameters:
-      - description: Game ID
+      - default: ef99fdfd88565827ad330d83aac5fbaa
+        description: Game ID
         in: path
         name: id
         required: true
         type: string
-      - description: API Key
+      - default: 587fa65a9c375165828a6fbb5f9963a7
+        description: API Key
         in: header
         name: X-API-KEY
         required: true
@@ -265,7 +306,47 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/responses.ResponseError'
-      summary: Updates a game of minesweeper
+      summary: Clicks field on a game of minesweeper
+      tags:
+      - game
+  /v1/api/games/start/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Starts a game of minesweeper and returns the mine field state
+      parameters:
+      - default: ef99fdfd88565827ad330d83aac5fbaa
+        description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 587fa65a9c375165828a6fbb5f9963a7
+        description: API Key
+        in: header
+        name: X-API-KEY
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/responses.ResponseError'
+      summary: Starts a game of minesweeper
       tags:
       - game
   /v1/auth/signIn:
