@@ -8,6 +8,7 @@ import (
 
 	"github.com/cmelgarejo/minesweeper-svc/database/models"
 	"github.com/cmelgarejo/minesweeper-svc/database/repo"
+	"github.com/cmelgarejo/minesweeper-svc/resources/messages/codes"
 	"github.com/cmelgarejo/minesweeper-svc/utils"
 	"github.com/cmelgarejo/minesweeper-svc/utils/logger"
 	"github.com/cmelgarejo/minesweeper-svc/web/game/engine"
@@ -187,6 +188,8 @@ func (svc *GameHandlerSvc) Click(w http.ResponseWriter, r *http.Request) {
 	err = svc.gameEngineSvc.Click(gameID, currentUser.Fullname, input.GetClickType(), input.Row, input.Col)
 	if err != nil {
 		if errors.Is(err, engine.ErrDefeat) {
+			svc.responseHelper.Error(w, r, http.StatusInternalServerError,
+				svc.catalog.WrapErrorWithCtx(ctx, err, codes.MsgCodeTotalDefeat, input.Row, input.Col))
 			gameStore.Status = engine.GameStatusDefeat
 		} else {
 			svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
@@ -204,7 +207,10 @@ func (svc *GameHandlerSvc) Click(w http.ResponseWriter, r *http.Request) {
 		svc.responseHelper.Error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-
+	// Should the error been pushed in the
+	if gameStore.Status == engine.GameStatusDefeat {
+		return
+	}
 	svc.responseHelper.Send(w, r, http.StatusOK, game)
 }
 

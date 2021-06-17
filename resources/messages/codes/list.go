@@ -15,4 +15,5 @@ var (
 	MsgCodeReqHelperLimitSize        = 1306
 	MsgCodeReqHelperLimit1Obj        = 1307
 	MsgCodeProcessOkWithErrs         = 1400
+	MsgCodeTotalDefeat               = 1500
 )

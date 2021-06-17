@@ -54,7 +54,7 @@ func (ms *MineSweeperGameSvcImpl) GetGame(gameID string) (game *engine.Game, err
 	return nil, ErrGameNotFound
 }
 
-func (ms *MineSweeperGameSvcImpl) Click(gameID string, clickedBy string, clickType engine.ClickType, col, row int) (err error) {
+func (ms *MineSweeperGameSvcImpl) Click(gameID string, clickedBy string, clickType engine.ClickType, row, col int) (err error) {
 	game, err := ms.GetGame(gameID)
 	if err != nil {
 		return err
